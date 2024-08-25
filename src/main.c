@@ -2,6 +2,7 @@
 #include "driver/uart.h"
 #include "esp_log.h"
 #include "esp_system.h"
+#include "esp_timer.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "string.h"
@@ -9,8 +10,8 @@
 static const int RX_BUF_SIZE = 256;
 // static const int TX_BUF_SIZE = 256;
 
-#define TXD_PIN (GPIO_NUM_4)
-#define RXD_PIN (GPIO_NUM_5)
+#define TXD_PIN (GPIO_NUM_1)
+#define RXD_PIN (GPIO_NUM_3)
 
 typedef struct {
   double roll;
@@ -40,23 +41,28 @@ void init(void) {
 }
 
 int sendData(const char *logName, const void *data, const size_t len) {
-  const int txBytes = uart_write_bytes(UART_NUM_1, data, len);
+  int txBytes = uart_write_bytes(UART_NUM_1, "\x7E", 1);
+  txBytes += uart_write_bytes(UART_NUM_1, data, len);
+
   ESP_LOGI(logName, "Wrote %d bytes", txBytes);
+
   return txBytes;
 }
 
 static void tx_task(void *arg) {
   static const char *TX_TASK_TAG = "TX_TASK";
   esp_log_level_set(TX_TASK_TAG, ESP_LOG_INFO);
-  // IMUMessage data = {1.0, 2.0};
-  int data = 69;
+  IMUMessage data = {1.0, 2.0};
+  // int data = 69;
 
   // ESP_LOGI(TX_TASK_TAG, "Attempting to send: (%f, %f)", data.roll,
   // data.ang_vel);
 
   while (1) {
     sendData(TX_TASK_TAG, &data, sizeof(data));
-    vTaskDelay(2000 / portTICK_PERIOD_MS);
+    // data.roll += 1.0;
+    //  ESP_LOGI(TX_TASK_TAG, "Time: %lld", esp_timer_get_time());
+    //   vTaskDelay(2000 / portTICK_PERIOD_MS);
   }
 }
 
@@ -79,8 +85,8 @@ static void rx_task(void *arg) {
 
 void app_main() {
   init();
-  xTaskCreate(rx_task, "uart_rx_task", 2048, NULL, configMAX_PRIORITIES - 1,
-              NULL);
-  xTaskCreate(tx_task, "uart_tx_task", 2048, NULL, configMAX_PRIORITIES - 1,
-              NULL);
+  xTaskCreatePinnedToCore(rx_task, "uart_rx_task", 2048, NULL,
+                          configMAX_PRIORITIES - 1, NULL, 0);
+  xTaskCreatePinnedToCore(tx_task, "uart_tx_task", 2048, NULL,
+                          configMAX_PRIORITIES - 1, NULL, 1);
 }
