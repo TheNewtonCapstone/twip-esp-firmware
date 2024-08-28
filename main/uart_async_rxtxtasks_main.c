@@ -20,20 +20,6 @@ static const int RX_BUF_SIZE = 1024;
 #define RXD_PIN (GPIO_NUM_3)
 #define PACKET_SIZE 16
 
-union u_double {
-    char bytes[8];
-    double data;
-};
-
-union u_float {
-    char bytes[4];
-    float data;
-};
-
-union u_int {
-    char bytes[4];
-    int data;
-};
 
 void init(void) {
     const uart_config_t uart_config = {
@@ -50,30 +36,31 @@ void init(void) {
     uart_set_pin(UART_NUM_1, TXD_PIN, RXD_PIN, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
 }
 
-int send_int(const union u_int* packet) {
-    unsigned long size = 4;
-    char buffer[PACKET_SIZE];
-    // clear all the bits 
-    for (int i = 0; i < PACKET_SIZE; i++) {
-        buffer[i] = 0x00;
-    };
+// int sendData(const char* logName, const void* data)
+// {
+//     const int len = strlen(data);
+//     const int txBytes = uart_write_bytes(UART_NUM_1, data, len);
+//     ESP_LOGI(logName, "Wrote %d bytes", txBytes);
+//     return txBytes;
+// }
 
-    // write 
-    buffer[0] = 0x7E; // starting charater 
-    buffer[1] = (size >> 0) & 0xFF;
-    for (int i = 0; i < size; i++) {
-        buffer[i + 2] = ((unsigned char*)packet->data)[i];
-    }
+int send_data(const void *data, const int len, const char type) {
+    char buffer[PACKET_SIZE];
+    buffer[0] = 0x7E; // start of packet
+    buffer[1] = type;
+    buffer[2] = (len >> 0) & 0xFF; 
+    memcpy(buffer+3, data, len);
     return uart_write_bytes(UART_NUM_1, &buffer, sizeof(buffer));
-};
+}
 
 static void tx_task(void* arg) {
     static const char* TX_TASK_TAG = "TX_TASK";
     esp_log_level_set(TX_TASK_TAG, ESP_LOG_INFO);
     while (1) {
-        union u_int packet = { .data = 255 };
-        send_int(&packet);
-        vTaskDelay(30 / portTICK_PERIOD_MS);
+        // union u_int packet = { .data = 255 };
+        double pi = 3.14;
+        sendData(&pi, sizeof(double),'d');
+        vTaskDelay(1000 / portTICK_PERIOD_MS);
     }
 }
 
@@ -85,6 +72,7 @@ static void rx_task(void* arg) {
         const int rxBytes = uart_read_bytes(UART_NUM_1, data, RX_BUF_SIZE, 1000 / portTICK_PERIOD_MS);
         if (rxBytes > 0) {
             data[rxBytes] = 0;
+            uart_write_bytes(UART_NUM_1,data, sizeof(data)); 
             ESP_LOGI(RX_TASK_TAG, "Read %d bytes: '%s'", rxBytes, data);
             ESP_LOG_BUFFER_HEXDUMP(RX_TASK_TAG, data, rxBytes, ESP_LOG_INFO);
         }
