@@ -16,8 +16,8 @@
 
 static const int RX_BUF_SIZE = 1024;
 
-#define TXD_PIN (GPIO_NUM_1)
-#define RXD_PIN (GPIO_NUM_3)
+#define TXD_PIN (GPIO_NUM_17)
+#define RXD_PIN (GPIO_NUM_16)
 #define PACKET_SIZE 16
 
 
@@ -44,12 +44,12 @@ void init(void) {
 //     return txBytes;
 // }
 
-int send_data(const void *data, const int len, const char type) {
+int send_data(const void* data, const int len, const char type) {
     char buffer[PACKET_SIZE];
     buffer[0] = 0x7E; // start of packet
     buffer[1] = type;
-    buffer[2] = (len >> 0) & 0xFF; 
-    memcpy(buffer+3, data, len);
+    buffer[2] = (len >> 0) & 0xFF;
+    memcpy(buffer + 3, data, len);
     return uart_write_bytes(UART_NUM_1, &buffer, sizeof(buffer));
 }
 
@@ -59,7 +59,7 @@ static void tx_task(void* arg) {
     while (1) {
         // union u_int packet = { .data = 255 };
         double pi = 3.14;
-        sendData(&pi, sizeof(double),'d');
+        send_data(&pi, sizeof(double), 'd');
         vTaskDelay(1000 / portTICK_PERIOD_MS);
     }
 }
@@ -72,7 +72,7 @@ static void rx_task(void* arg) {
         const int rxBytes = uart_read_bytes(UART_NUM_1, data, RX_BUF_SIZE, 1000 / portTICK_PERIOD_MS);
         if (rxBytes > 0) {
             data[rxBytes] = 0;
-            uart_write_bytes(UART_NUM_1,data, sizeof(data)); 
+            uart_write_bytes(UART_NUM_1, data, sizeof(data));
             ESP_LOGI(RX_TASK_TAG, "Read %d bytes: '%s'", rxBytes, data);
             ESP_LOG_BUFFER_HEXDUMP(RX_TASK_TAG, data, rxBytes, ESP_LOG_INFO);
         }
