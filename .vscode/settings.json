@@ -5,6 +5,7 @@
         "esp_system.h": "c",
         "gpio.h": "c",
         "uart.h": "c",
-        "freertos.h": "c"
+        "freertos.h": "c",
+        "inttypes.h": "c"
     }
 }

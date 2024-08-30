@@ -1,92 +1,91 @@
-#include "driver/gpio.h"
-#include "driver/uart.h"
-#include "esp_log.h"
-#include "esp_system.h"
-#include "esp_timer.h"
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include "string.h"
+/*
+ * Display.c
+ *
+ *  Created on: 14.08.2017
+ *      Author: darek
+ */
+#include <driver/i2c.h>
+#include <esp_err.h>
+#include <esp_log.h>
+#include <freertos/FreeRTOS.h>
+#include <freertos/task.h>
 
-static const int RX_BUF_SIZE = 256;
-// static const int TX_BUF_SIZE = 256;
+#include "MPU6050.h"
+#include "MPU6050_6Axis_MotionApps20.h"
+#include "sdkconfig.h"
 
-#define TXD_PIN (GPIO_NUM_1)
-#define RXD_PIN (GPIO_NUM_3)
+#define PIN_SDA 21
+#define PIN_CLK 22
 
-typedef struct {
-  double roll;
-  double ang_vel;
-} IMUMessage;
+Quaternion q;         // [w, x, y, z]         quaternion container
+VectorFloat gravity;  // [x, y, z]            gravity vector
+float
+    ypr[3];  // [yaw, pitch, roll]   yaw/pitch/roll container and gravity vector
+uint16_t packetSize = 42;  // expected DMP packet size (default is 42 bytes)
+uint16_t fifoCount;        // count of all bytes currently in FIFO
+uint8_t fifoBuffer[64];    // FIFO storage buffer
+uint8_t mpuIntStatus;      // holds actual interrupt status byte from MPU
 
-typedef struct {
-  double left_torque;
-  double right_torque;
-} MotorMessage;
-
-void init(void) {
-  const uart_config_t uart_config = {
-      .baud_rate = 115200,
-      .data_bits = UART_DATA_8_BITS,
-      .parity = UART_PARITY_DISABLE,
-      .stop_bits = UART_STOP_BITS_1,
-      .flow_ctrl = UART_HW_FLOWCTRL_DISABLE,
-      .source_clk = UART_SCLK_DEFAULT,
-  };
-
-  // We won't use a buffer for sending data.
-  uart_driver_install(UART_NUM_1, RX_BUF_SIZE, 0, 0, NULL, 0);
-  uart_param_config(UART_NUM_1, &uart_config);
-  uart_set_pin(UART_NUM_1, TXD_PIN, RXD_PIN, UART_PIN_NO_CHANGE,
-               UART_PIN_NO_CHANGE);
+void task_initI2C(void *ignore) {
+  i2c_config_t conf;
+  conf.mode = I2C_MODE_MASTER;
+  conf.sda_io_num = (gpio_num_t)PIN_SDA;
+  conf.scl_io_num = (gpio_num_t)PIN_CLK;
+  conf.sda_pullup_en = GPIO_PULLUP_ENABLE;
+  conf.scl_pullup_en = GPIO_PULLUP_ENABLE;
+  conf.master.clk_speed = 400000;
+  ESP_ERROR_CHECK(i2c_param_config(I2C_NUM_0, &conf));
+  ESP_ERROR_CHECK(i2c_driver_install(I2C_NUM_0, I2C_MODE_MASTER, 0, 0, 0));
+  vTaskDelete(NULL);
 }
 
-int sendData(const char *logName, const void *data, const size_t len) {
-  int txBytes = uart_write_bytes(UART_NUM_1, "\x7E", 1);
-  txBytes += uart_write_bytes(UART_NUM_1, data, len);
+void task_display(void *) {
+  MPU6050 mpu = MPU6050();
+  mpu.initialize();
+  mpu.dmpInitialize();
 
-  ESP_LOGI(logName, "Wrote %d bytes", txBytes);
+  // This need to be setup individually
+  // mpu.setXGyroOffset(220);
+  // mpu.setYGyroOffset(76);
+  // mpu.setZGyroOffset(-85);
+  // mpu.setZAccelOffset(1788);
+  mpu.CalibrateAccel(6);
+  mpu.CalibrateGyro(6);
 
-  return txBytes;
-}
-
-static void tx_task(void *arg) {
-  static const char *TX_TASK_TAG = "TX_TASK";
-  esp_log_level_set(TX_TASK_TAG, ESP_LOG_INFO);
-  IMUMessage data = {1.0, 2.0};
-  // int data = 69;
-
-  // ESP_LOGI(TX_TASK_TAG, "Attempting to send: (%f, %f)", data.roll,
-  // data.ang_vel);
+  mpu.setDMPEnabled(true);
 
   while (1) {
-    sendData(TX_TASK_TAG, &data, sizeof(data));
-    // data.roll += 1.0;
-    //  ESP_LOGI(TX_TASK_TAG, "Time: %lld", esp_timer_get_time());
-    //   vTaskDelay(2000 / portTICK_PERIOD_MS);
-  }
-}
+    mpuIntStatus = mpu.getIntStatus();
+    // get current FIFO count
+    fifoCount = mpu.getFIFOCount();
 
-static void rx_task(void *arg) {
-  static const char *RX_TASK_TAG = "RX_TASK";
-  esp_log_level_set(RX_TASK_TAG, ESP_LOG_INFO);
-  MotorMessage *data = (MotorMessage *)malloc(RX_BUF_SIZE);
-  while (1) {
-    const int rxBytes = uart_read_bytes(UART_NUM_1, data, RX_BUF_SIZE,
-                                        1000 / portTICK_PERIOD_MS);
+    if ((mpuIntStatus & 0x10) || fifoCount == 1024) {
+      // reset so we can continue cleanly
+      mpu.resetFIFO();
 
-    if (rxBytes > 0) {
-      ESP_LOGI(RX_TASK_TAG, "Read %d bytes, (%f, %f)", rxBytes,
-               data->left_torque, data->right_torque);
-      ESP_LOG_BUFFER_HEXDUMP(RX_TASK_TAG, data, rxBytes, ESP_LOG_INFO);
+      // otherwise, check for DMP data ready interrupt frequently)
+    } else if (mpuIntStatus & 0x02) {
+      // wait for correct available data length, should be a VERY short wait
+      while (fifoCount < packetSize) fifoCount = mpu.getFIFOCount();
+
+      // read a packet from FIFO
+
+      mpu.getFIFOBytes(fifoBuffer, packetSize);
+      mpu.dmpGetQuaternion(&q, fifoBuffer);
+      mpu.dmpGetGravity(&gravity, &q);
+      mpu.dmpGetYawPitchRoll(ypr, &q, &gravity);
+      printf("YAW: %3.1f, ", ypr[0] * 180 / M_PI);
+      printf("PITCH: %3.1f, ", ypr[1] * 180 / M_PI);
+      printf("ROLL: %3.1f \n", ypr[2] * 180 / M_PI);
     }
+
+    // Best result is to match with DMP refresh rate
+    //  Its last value in components/MPU6050/MPU6050_6Axis_MotionApps20.h file
+    //  line 310 Now its 0x13, which means DMP is refreshed with 10Hz rate
+    //  vTaskDelay(5/portTICK_PERIOD_MS);
   }
-  free(data);
+
+  vTaskDelete(NULL);
 }
 
-void app_main() {
-  init();
-  xTaskCreatePinnedToCore(rx_task, "uart_rx_task", 2048, NULL,
-                          configMAX_PRIORITIES - 1, NULL, 0);
-  xTaskCreatePinnedToCore(tx_task, "uart_tx_task", 2048, NULL,
-                          configMAX_PRIORITIES - 1, NULL, 1);
-}
+void app_main() {}
