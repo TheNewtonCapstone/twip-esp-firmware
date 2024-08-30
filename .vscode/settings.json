@@ -5,6 +5,14 @@
         "esp_system.h": "c",
         "gpio.h": "c",
         "uart.h": "c",
-        "freertos.h": "c"
+        "freertos.h": "c",
+        "imu.h": "c",
+        "mpu6050.h": "c",
+        "string.h": "c",
+        "esp_timer.h": "c",
+        "imu_result.h": "c",
+        "i2c_master.h": "c",
+        "i2c.h": "c",
+        "adc_hal.h": "c"
     }
 }

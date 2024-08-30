@@ -1,6 +1,9 @@
 # Build files
 .pio
-build
+build/
 
 # Misc Files
 *.old
+
+# Dependency directory
+managed_components/

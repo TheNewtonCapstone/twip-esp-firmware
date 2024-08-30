@@ -164,6 +164,8 @@
                 "/home/nyquist/.platformio/packages/framework-espidf/components/perfmon/include",
                 "/home/nyquist/.platformio/packages/framework-espidf/components/spiffs/include",
                 "/home/nyquist/.platformio/packages/framework-espidf/components/wifi_provisioning/include",
+                "/home/nyquist/projects/twip-firmware/managed_components/espressif__mpu6050/include",
+                "/home/nyquist/projects/twip-firmware/components/imu/include",
                 ""
             ],
             "browse": {
@@ -325,6 +327,8 @@
                     "/home/nyquist/.platformio/packages/framework-espidf/components/perfmon/include",
                     "/home/nyquist/.platformio/packages/framework-espidf/components/spiffs/include",
                     "/home/nyquist/.platformio/packages/framework-espidf/components/wifi_provisioning/include",
+                    "/home/nyquist/projects/twip-firmware/managed_components/espressif__mpu6050/include",
+                    "/home/nyquist/projects/twip-firmware/components/imu/include",
                     ""
                 ]
             },
