@@ -33,10 +33,26 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ===============================================
+*/
 
+#ifndef _MPU6050_H_
+#define _MPU6050_H_
 
 #include "I2Cdev.h"
 #include "helper_3dmath.h"
+
+// supporting link:
+// http://forum.arduino.cc/index.php?&topic=143444.msg1079517#msg1079517 also:
+// http://forum.arduino.cc/index.php?&topic=141571.msg1062899#msg1062899s
+
+#undef pgm_read_byte
+#define pgm_read_byte(addr) (*(const unsigned char *)(addr))
+
+// #define PROGMEM /* empty */
+// #define pgm_read_byte(x) (*(x))
+// #define pgm_read_word(x) (*(x))
+// #define pgm_read_float(x) (*(x))
+// #define PSTR(STR) STR
 
 #define MPU6050_INCLUDE_DMP_MOTIONAPPS20
 #define MPU6050_ADDRESS_AD0_LOW \
@@ -429,7 +445,7 @@ class MPU6050 {
   MPU6050();
   MPU6050(uint8_t address);
 
-  void ReadRegister(uint8_t reg, uint8_t *data, uint8_t len);
+  void readRegister(uint8_t reg, uint8_t *data, uint8_t len);
 
   void initialize();
   bool testConnection();
@@ -862,56 +878,55 @@ class MPU6050 {
   // Get Fixed Point data from FIFO
   uint8_t dmpGetAccel(int32_t *data, const uint8_t *packet = 0);
   uint8_t dmpGetAccel(int16_t *data, const uint8_t *packet = 0);
-  uint8_t dmpGetAccel(ivector16_t *v, const uint8_t *packet = 0);
+  uint8_t dmpGetAccel(VectorInt16 *v, const uint8_t *packet = 0);
   uint8_t dmpGetQuaternion(int32_t *data, const uint8_t *packet = 0);
   uint8_t dmpGetQuaternion(int16_t *data, const uint8_t *packet = 0);
-  uint8_t dmpGetQuaternion(quaternion_t *q, const uint8_t *packet = 0);
+  uint8_t dmpGetQuaternion(Quaternion *q, const uint8_t *packet = 0);
   uint8_t dmpGet6AxisQuaternion(int32_t *data, const uint8_t *packet = 0);
   uint8_t dmpGet6AxisQuaternion(int16_t *data, const uint8_t *packet = 0);
-  uint8_t dmpGet6AxisQuaternion(quaternion_t *q, const uint8_t *packet = 0);
+  uint8_t dmpGet6AxisQuaternion(Quaternion *q, const uint8_t *packet = 0);
   uint8_t dmpGetRelativeQuaternion(int32_t *data, const uint8_t *packet = 0);
   uint8_t dmpGetRelativeQuaternion(int16_t *data, const uint8_t *packet = 0);
-  uint8_t dmpGetRelativeQuaternion(quaternion_t *data,
-                                   const uint8_t *packet = 0);
+  uint8_t dmpGetRelativeQuaternion(Quaternion *data, const uint8_t *packet = 0);
   uint8_t dmpGetGyro(int32_t *data, const uint8_t *packet = 0);
   uint8_t dmpGetGyro(int16_t *data, const uint8_t *packet = 0);
-  uint8_t dmpGetGyro(ivector16_t *v, const uint8_t *packet = 0);
+  uint8_t dmpGetGyro(VectorInt16 *v, const uint8_t *packet = 0);
   uint8_t dmpSetLinearAccelFilterCoefficient(float coef);
   uint8_t dmpGetLinearAccel(int32_t *data, const uint8_t *packet = 0);
   uint8_t dmpGetLinearAccel(int16_t *data, const uint8_t *packet = 0);
-  uint8_t dmpGetLinearAccel(ivector16_t *v, const uint8_t *packet = 0);
-  uint8_t dmpGetLinearAccel(ivector16_t *v, ivector16_t *vRaw,
-                            fvector_t *gravity);
+  uint8_t dmpGetLinearAccel(VectorInt16 *v, const uint8_t *packet = 0);
+  uint8_t dmpGetLinearAccel(VectorInt16 *v, VectorInt16 *vRaw,
+                            VectorFloat *gravity);
   uint8_t dmpGetLinearAccelInWorld(int32_t *data, const uint8_t *packet = 0);
   uint8_t dmpGetLinearAccelInWorld(int16_t *data, const uint8_t *packet = 0);
-  uint8_t dmpGetLinearAccelInWorld(ivector16_t *v, const uint8_t *packet = 0);
-  uint8_t dmpGetLinearAccelInWorld(ivector16_t *v, ivector16_t *vReal,
-                                   quaternion_t *q);
+  uint8_t dmpGetLinearAccelInWorld(VectorInt16 *v, const uint8_t *packet = 0);
+  uint8_t dmpGetLinearAccelInWorld(VectorInt16 *v, VectorInt16 *vReal,
+                                   Quaternion *q);
   uint8_t dmpGetGyroAndAccelSensor(int32_t *data, const uint8_t *packet = 0);
   uint8_t dmpGetGyroAndAccelSensor(int16_t *data, const uint8_t *packet = 0);
-  uint8_t dmpGetGyroAndAccelSensor(ivector16_t *g, ivector16_t *a,
+  uint8_t dmpGetGyroAndAccelSensor(VectorInt16 *g, VectorInt16 *a,
                                    const uint8_t *packet = 0);
   uint8_t dmpGetGyroSensor(int32_t *data, const uint8_t *packet = 0);
   uint8_t dmpGetGyroSensor(int16_t *data, const uint8_t *packet = 0);
-  uint8_t dmpGetGyroSensor(ivector16_t *v, const uint8_t *packet = 0);
+  uint8_t dmpGetGyroSensor(VectorInt16 *v, const uint8_t *packet = 0);
   uint8_t dmpGetControlData(int32_t *data, const uint8_t *packet = 0);
   uint8_t dmpGetTemperature(int32_t *data, const uint8_t *packet = 0);
   uint8_t dmpGetGravity(int32_t *data, const uint8_t *packet = 0);
   uint8_t dmpGetGravity(int16_t *data, const uint8_t *packet = 0);
-  uint8_t dmpGetGravity(ivector16_t *v, const uint8_t *packet = 0);
-  uint8_t dmpGetGravity(fvector_t *v, quaternion_t *q);
+  uint8_t dmpGetGravity(VectorInt16 *v, const uint8_t *packet = 0);
+  uint8_t dmpGetGravity(VectorFloat *v, Quaternion *q);
   uint8_t dmpGetUnquantizedAccel(int32_t *data, const uint8_t *packet = 0);
   uint8_t dmpGetUnquantizedAccel(int16_t *data, const uint8_t *packet = 0);
-  uint8_t dmpGetUnquantizedAccel(ivector16_t *v, const uint8_t *packet = 0);
+  uint8_t dmpGetUnquantizedAccel(VectorInt16 *v, const uint8_t *packet = 0);
   uint8_t dmpGetQuantizedAccel(int32_t *data, const uint8_t *packet = 0);
   uint8_t dmpGetQuantizedAccel(int16_t *data, const uint8_t *packet = 0);
-  uint8_t dmpGetQuantizedAccel(ivector16_t *v, const uint8_t *packet = 0);
+  uint8_t dmpGetQuantizedAccel(VectorInt16 *v, const uint8_t *packet = 0);
   uint8_t dmpGetExternalSensorData(int32_t *data, uint16_t size,
                                    const uint8_t *packet = 0);
   uint8_t dmpGetEIS(int32_t *data, const uint8_t *packet = 0);
 
-  uint8_t dmpGetEuler(float *data, quaternion_t *q);
-  uint8_t dmpGetYawPitchRoll(float *data, quaternion_t *q, fvector_t *gravity);
+  uint8_t dmpGetEuler(float *data, Quaternion *q);
+  uint8_t dmpGetYawPitchRoll(float *data, Quaternion *q, VectorFloat *gravity);
 
   // Get Floating Point data from FIFO
   uint8_t dmpGetAccelFloat(float *data, const uint8_t *packet = 0);
@@ -1042,7 +1057,7 @@ class MPU6050 {
   uint16_t dmpGetFIFOPacketSize();
 #endif
 
-  void CalibrateGyro(
+  void calibrateGyro(
       uint8_t Loops = 15);  // Fine tune after setting offsets with less Loops.
   void CalibrateAccel(
       uint8_t Loops = 15);  // Fine tune after setting offsets with less Loops.
@@ -1052,3 +1067,5 @@ class MPU6050 {
   uint8_t devAddr;
   uint8_t buffer[14];
 };
+
+#endif /* _MPU6050_H_ */

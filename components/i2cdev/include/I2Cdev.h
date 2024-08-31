@@ -6,6 +6,7 @@
 // Changelog:
 //      2015-01-02 - Initial release
 
+
 /* ============================================
 I2Cdev device library code is placed under the MIT license
 Copyright (c) 2015 Jeff Rowberg, Nicolas Baldeck
@@ -30,39 +31,53 @@ THE SOFTWARE.
 ===============================================
 */
 
-#pragma once
+#ifndef _I2CDEV_H_
+#define _I2CDEV_H_
 
 #include <driver/i2c.h>
 
-#define I2C_SDA_PORT I2C_NUM_0
-#define I2C_SDA_PIN GPIO_NUM_21
-// #define I2C_SDA_MODE gpioModeWiredAnd
-// #define I2C_SDA_DOUT 1
+#define I2C_SDA_PORT gpioPortA
+#define I2C_SDA_PIN 0
+#define I2C_SDA_MODE gpioModeWiredAnd
+#define I2C_SDA_DOUT 1
 
-#define I2C_SCL_PORT I2C_NUM_0
-#define I2C_SCL_PIN GPIO_NUM_22
-// #define I2C_SCL_MODE gpioModeWiredAnd
-// #define I2C_SCL_DOUT 1
+#define I2C_SCL_PORT gpioPortA
+#define I2C_SCL_PIN 1
+#define I2C_SCL_MODE gpioModeWiredAnd
+#define I2C_SCL_DOUT 1
 
 #define I2CDEV_DEFAULT_READ_TIMEOUT 1000
 
-int8_t readBit(uint8_t devAddr, uint8_t regAddr, uint8_t bitNum, uint8_t *data,
-               uint16_t timeout);
-int8_t readBits(uint8_t devAddr, uint8_t regAddr, uint8_t bitStart,
-                uint8_t length, uint8_t *data, uint16_t timeout);
-int8_t readByte(uint8_t devAddr, uint8_t regAddr, uint8_t *data,
-                uint16_t timeout);
-int8_t readWord(uint8_t devAddr, uint8_t regAddr, uint16_t *data,
-                uint16_t timeout);
-int8_t readBytes(uint8_t devAddr, uint8_t regAddr, uint8_t length,
-                 uint8_t *data, uint16_t timeout);
+class I2Cdev {
+    public:
+        I2Cdev();
 
-bool writeBit(uint8_t devAddr, uint8_t regAddr, uint8_t bitNum, uint8_t data);
-bool writeBits(uint8_t devAddr, uint8_t regAddr, uint8_t bitStart,
-               uint8_t length, uint8_t data);
-bool writeByte(uint8_t devAddr, uint8_t regAddr, uint8_t data);
-bool writeWord(uint8_t devAddr, uint8_t regAddr, uint16_t data);
-bool writeBytes(uint8_t devAddr, uint8_t regAddr, uint8_t length,
-                uint8_t *data);
+        static void initialize();
+        static void enable(bool isEnabled);
 
-void selectRegister(uint8_t dev, uint8_t reg);
+        static int8_t readBit(uint8_t devAddr, uint8_t regAddr, uint8_t bitNum, uint8_t *data, uint16_t timeout=I2Cdev::readTimeout);
+        //TODO static int8_t readBitW(uint8_t devAddr, uint8_t regAddr, uint8_t bitNum, uint16_t *data, uint16_t timeout=I2Cdev::readTimeout);
+        static int8_t readBits(uint8_t devAddr, uint8_t regAddr, uint8_t bitStart, uint8_t length, uint8_t *data, uint16_t timeout=I2Cdev::readTimeout);
+        //TODO static int8_t readBitsW(uint8_t devAddr, uint8_t regAddr, uint8_t bitStart, uint8_t length, uint16_t *data, uint16_t timeout=I2Cdev::readTimeout);
+        static int8_t readByte(uint8_t devAddr, uint8_t regAddr, uint8_t *data, uint16_t timeout=I2Cdev::readTimeout);
+        static int8_t readWord(uint8_t devAddr, uint8_t regAddr, uint16_t *data, uint16_t timeout=I2Cdev::readTimeout);
+        static int8_t readBytes(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint8_t *data, uint16_t timeout=I2Cdev::readTimeout);
+        //TODO static int8_t readWords(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint16_t *data, uint16_t timeout=I2Cdev::readTimeout);
+
+        static bool writeBit(uint8_t devAddr, uint8_t regAddr, uint8_t bitNum, uint8_t data);
+        //TODO static bool writeBitW(uint8_t devAddr, uint8_t regAddr, uint8_t bitNum, uint16_t data);
+        static bool writeBits(uint8_t devAddr, uint8_t regAddr, uint8_t bitStart, uint8_t length, uint8_t data);
+        //TODO static bool writeBitsW(uint8_t devAddr, uint8_t regAddr, uint8_t bitStart, uint8_t length, uint16_t data);
+        static bool writeByte(uint8_t devAddr, uint8_t regAddr, uint8_t data);
+        static bool writeWord(uint8_t devAddr, uint8_t regAddr, uint16_t data);
+        static bool writeBytes(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint8_t *data);
+        //TODO static bool writeWords(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint16_t *data);
+
+        static uint16_t readTimeout;
+
+    //private:
+        static void SelectRegister(uint8_t dev, uint8_t reg);
+        //static I2C_TransferReturn_TypeDef transfer(I2C_TransferSeq_TypeDef *seq, uint16_t timeout=I2Cdev::readTimeout);
+};
+
+#endif /* _I2CDEV_H_ */

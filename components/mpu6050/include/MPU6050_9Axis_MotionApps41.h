@@ -34,10 +34,6 @@ THE SOFTWARE.
 #ifndef _MPU6050_9AXIS_MOTIONAPPS41_H_
 #define _MPU6050_9AXIS_MOTIONAPPS41_H_
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include "I2Cdev.h"
 #include "helper_3dmath.h"
 
@@ -492,7 +488,7 @@ uint8_t MPU6050::dmpInitialize() {
       setIntEnabled(0x12);
 
       DEBUG_PRINTLN(F("Setting sample rate to 200Hz..."));
-      setRate(4);  // 1khz / (1 + 4) = 200 Hz
+      SetRate(4);  // 1khz / (1 + 4) = 200 Hz
 
       DEBUG_PRINTLN(F("Setting clock source to Z Gyro..."));
       setClockSource(MPU6050_CLOCK_PLL_ZGYRO);
@@ -996,7 +992,3 @@ uint8_t MPU6050::dmpReadAndProcessFIFOPacket(uint8_t numPackets,
 uint16_t MPU6050::dmpGetFIFOPacketSize() { return dmpPacketSize; }
 
 #endif /* _MPU6050_9AXIS_MOTIONAPPS41_H_ */
-
-#ifdef __cplusplus
-}
-#endif

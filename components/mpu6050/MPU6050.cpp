@@ -41,11 +41,7 @@ THE SOFTWARE.
 
 #define I2C_NUM I2C_NUM_0
 
-#if __cplusplus
-extern "C" {
-#endif
-
-void MPU6050::ReadRegister(uint8_t reg, uint8_t* data, uint8_t len) {
+void MPU6050::readRegister(uint8_t reg, uint8_t* data, uint8_t len) {
   uint8_t dev = 0x68;
   i2c_cmd_handle_t cmd;
   I2Cdev::SelectRegister(dev, reg);
@@ -94,7 +90,7 @@ void MPU6050::initialize() {
  * Make sure the device is connected and responds as expected.
  * @return True if connection is valid, false otherwise
  */
-bool MPU6050::testConnection() { return getDeviceID() == 0x34; }
+bool MPU6050::TestConnection() { return getDeviceID() == 0x34; }
 
 // AUX_VDDIO register (InvenSense demo code calls this RA_*G_OFFS_TC)
 
@@ -104,7 +100,7 @@ bool MPU6050::testConnection() { return getDeviceID() == 0x34; }
  * the MPU-6000, which does not have a VLOGIC pin.
  * @return I2C supply voltage level (0=VLOGIC, 1=VDD)
  */
-uint8_t MPU6050::getAuxVDDIOLevel() {
+uint8_t MPU6050::GetAuxVDDIOLevel() {
   I2Cdev::readBit(devAddr, MPU6050_RA_YG_OFFS_TC, MPU6050_TC_PWR_MODE_BIT,
                   buffer);
   return buffer[0];
@@ -115,7 +111,7 @@ uint8_t MPU6050::getAuxVDDIOLevel() {
  * the MPU-6000, which does not have a VLOGIC pin.
  * @param level I2C supply voltage level (0=VLOGIC, 1=VDD)
  */
-void MPU6050::setAuxVDDIOLevel(uint8_t level) {
+void MPU6050::SetAuxVDDIOLevel(uint8_t level) {
   I2Cdev::writeBit(devAddr, MPU6050_RA_YG_OFFS_TC, MPU6050_TC_PWR_MODE_BIT,
                    level);
 }
@@ -143,7 +139,7 @@ void MPU6050::setAuxVDDIOLevel(uint8_t level) {
  * @return Current sample rate
  * @see MPU6050_RA_SMPLRT_DIV
  */
-uint8_t MPU6050::getRate() {
+uint8_t MPU6050::GetRate() {
   I2Cdev::readByte(devAddr, MPU6050_RA_SMPLRT_DIV, buffer);
   return buffer[0];
 }
@@ -152,7 +148,7 @@ uint8_t MPU6050::getRate() {
  * @see getRate()
  * @see MPU6050_RA_SMPLRT_DIV
  */
-void MPU6050::setRate(uint8_t rate) {
+void MPU6050::SetRate(uint8_t rate) {
   I2Cdev::writeByte(devAddr, MPU6050_RA_SMPLRT_DIV, rate);
 }
 
@@ -3468,7 +3464,7 @@ float map(float val, float I_Min, float I_Max, float O_Min, float O_Max) {
 /**
   @brief      Fully calibrate Gyro from ZERO in about 6-7 Loops 600-700 readings
 */
-void MPU6050::CalibrateGyro(uint8_t Loops) {
+void MPU6050::calibrateGyro(uint8_t Loops) {
   double kP = 0.3;
   double kI = 90;
   float x;
@@ -3573,7 +3569,3 @@ void MPU6050::PID(uint8_t ReadAddress, float kP, float kI, uint8_t Loops) {
   resetFIFO();
   resetDMP();
 }
-
-#if __cplusplus
-}
-#endif

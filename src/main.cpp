@@ -14,6 +14,10 @@
 #include "MPU6050_6Axis_MotionApps20.h"
 #include "sdkconfig.h"
 
+extern "C" {
+void app_main(void);
+}
+
 #define PIN_SDA 21
 #define PIN_CLK 22
 
@@ -41,7 +45,7 @@ void task_initI2C(void *ignore) {
 
 void task_display(void *) {
   MPU6050 mpu = MPU6050();
-  mpu.initialize();
+  mpu.Initialize();
   mpu.dmpInitialize();
 
   // This need to be setup individually
@@ -50,7 +54,7 @@ void task_display(void *) {
   // mpu.setZGyroOffset(-85);
   // mpu.setZAccelOffset(1788);
   mpu.CalibrateAccel(6);
-  mpu.CalibrateGyro(6);
+  mpu.calibrateGyro(6);
 
   mpu.setDMPEnabled(true);
 
@@ -82,10 +86,13 @@ void task_display(void *) {
     // Best result is to match with DMP refresh rate
     //  Its last value in components/MPU6050/MPU6050_6Axis_MotionApps20.h file
     //  line 310 Now its 0x13, which means DMP is refreshed with 10Hz rate
-    //  vTaskDelay(5/portTICK_PERIOD_MS);
+    vTaskDelay(10 / portTICK_PERIOD_MS);
   }
 
   vTaskDelete(NULL);
 }
 
-void app_main() {}
+void app_main() {
+  xTaskCreate(task_initI2C, "task_initI2C", 2048, NULL, 5, NULL);
+  xTaskCreate(task_display, "task_display", 2048, NULL, 5, NULL);
+}
