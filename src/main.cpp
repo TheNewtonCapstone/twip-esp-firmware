@@ -10,98 +10,41 @@
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 
-#include "MPU6050_6Axis_MotionApps20.h"
-#include "MPU6050.h"
+#include "imu.h"
 #include "sdkconfig.h"
 
-extern "C"
-{
-  void app_main(void);
+extern "C" {
+void app_main(void);
 }
 
-#define PIN_SDA 21
-#define PIN_CLK 22
+static IMUData imu_data;
 
-Quaternion q;        // [w, x, y, z]         quaternion container
-VectorFloat gravity; // [x, y, z]            gravity vector
-float
-    ypr[3];               // [yaw, pitch, roll]   yaw/pitch/roll container and gravity vector
-uint16_t packetSize = 42; // expected DMP packet size (default is 42 bytes)
-uint16_t fifoCount;       // count of all bytes currently in FIFO
-uint8_t fifoBuffer[64];   // FIFO storage buffer
-uint8_t mpuIntStatus;     // holds actual interrupt status byte from MPU
+void imu_cb(IMUData data) { imu_data = data; }
 
-/* void task_initI2C(void *ignore)
-{
-  i2c_config_t conf;
-  conf.mode = I2C_MODE_MASTER;
-  conf.sda_io_num = (gpio_num_t)PIN_SDA;
-  conf.scl_io_num = (gpio_num_t)PIN_CLK;
-  conf.sda_pullup_en = GPIO_PULLUP_ENABLE;
-  conf.scl_pullup_en = GPIO_PULLUP_ENABLE;
-  conf.master.clk_speed = 400000;
-  ESP_ERROR_CHECK(i2c_param_config(I2C_NUM_0, &conf));
-  ESP_ERROR_CHECK(i2c_driver_install(I2C_NUM_0, I2C_MODE_MASTER, 0, 0, 0));
-  vTaskDelete(NULL);
-} */
+void task_display(void *) {
+  IMU imu = IMU(0x68);
+  imu.init();
+  imu.subscribe("imu", imu_cb);
+  imu.start(100);
 
-void task_display(void *)
-{
-  MPU6050 mpu = MPU6050();
-  mpu.initialize();
-  mpu.dmpInitialize();
+  while (true) {
+    vTaskDelay(1000 / portTICK_PERIOD_MS);
 
-  // This need to be setup individually
-  // mpu.setXGyroOffset(220);
-  // mpu.setYGyroOffset(76);
-  // mpu.setZGyroOffset(-85);
-  // mpu.setZAccelOffset(1788);
-  mpu.CalibrateAccel(6);
-  mpu.calibrateGyro(6);
-
-  mpu.setDMPEnabled(true);
-
-  while (1)
-  {
-    mpuIntStatus = mpu.getIntStatus();
-    // get current FIFO count
-    fifoCount = mpu.getFIFOCount();
-
-    if ((mpuIntStatus & 0x10) || fifoCount == 1024)
-    {
-      // reset so we can continue cleanly
-      mpu.resetFIFO();
-
-      // otherwise, check for DMP data ready interrupt frequently)
-    }
-    else if (mpuIntStatus & 0x02)
-    {
-      // wait for correct available data length, should be a VERY short wait
-      while (fifoCount < packetSize)
-        fifoCount = mpu.getFIFOCount();
-
-      // read a packet from FIFO
-
-      mpu.getFIFOBytes(fifoBuffer, packetSize);
-      mpu.dmpGetQuaternion(&q, fifoBuffer);
-      mpu.dmpGetGravity(&gravity, &q);
-      mpu.dmpGetYawPitchRoll(ypr, &q, &gravity);
-      printf("YAW: %3.1f, ", ypr[0] * 180 / M_PI);
-      printf("PITCH: %3.1f, ", ypr[1] * 180 / M_PI);
-      printf("ROLL: %3.1f \n", ypr[2] * 180 / M_PI);
-    }
-
-    // Best result is to match with DMP refresh rate
-    //  Its last value in components/MPU6050/MPU6050_6Axis_MotionApps20.h file
-    //  line 310 Now its 0x13, which means DMP is refreshed with 10Hz rate
-    vTaskDelay(100 / portTICK_PERIOD_MS);
+    ESP_LOGI("IMU", "Gravity: %f %f %f", imu_data.gravity.x, imu_data.gravity.y,
+             imu_data.gravity.z);
+    ESP_LOGI("IMU", "Linear Acc: %d %d %d", imu_data.linear_acc.x,
+             imu_data.linear_acc.y, imu_data.linear_acc.z);
+    ESP_LOGI("IMU", "Angular Vel: %d %d %d", imu_data.ang_vel.x,
+             imu_data.ang_vel.y, imu_data.ang_vel.z);
+    ESP_LOGI("IMU", "Orientation: %f %f %f", imu_data.orientation.x,
+             imu_data.orientation.y, imu_data.orientation.z);
   }
 
-  vTaskDelete(NULL);
+  imu.stop();
+  imu.unsubscribe("imu");
 }
 
-void app_main()
-{
+void app_main() {
   // xTaskCreate(task_initI2C, "task_initI2C", 2048, NULL, 5, NULL);
   xTaskCreate(task_display, "task_display", 4096, NULL, 5, NULL);
 }
