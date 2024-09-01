@@ -1,7 +1,6 @@
 #include <stdio.h>
-#include "main.h"
+#include "imu.h"
 
 void func(void)
 {
-
 }

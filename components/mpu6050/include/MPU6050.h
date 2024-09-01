@@ -56,35 +56,35 @@ THE SOFTWARE.
 
 #define MPU6050_INCLUDE_DMP_MOTIONAPPS20
 #define MPU6050_ADDRESS_AD0_LOW \
-  0x68  // address pin low (GND), default for InvenSense evaluation board
-#define MPU6050_ADDRESS_AD0_HIGH 0x69  // address pin high (VCC)
+  0x68                                // address pin low (GND), default for InvenSense evaluation board
+#define MPU6050_ADDRESS_AD0_HIGH 0x69 // address pin high (VCC)
 #define MPU6050_DEFAULT_ADDRESS MPU6050_ADDRESS_AD0_LOW
 
 #define MPU6050_RA_XG_OFFS_TC \
-  0x00  //[7] PWR_MODE, [6:1] XG_OFFS_TC, [0] OTP_BNK_VLD
+  0x00 //[7] PWR_MODE, [6:1] XG_OFFS_TC, [0] OTP_BNK_VLD
 #define MPU6050_RA_YG_OFFS_TC \
-  0x01  //[7] PWR_MODE, [6:1] YG_OFFS_TC, [0] OTP_BNK_VLD
+  0x01 //[7] PWR_MODE, [6:1] YG_OFFS_TC, [0] OTP_BNK_VLD
 #define MPU6050_RA_ZG_OFFS_TC \
-  0x02  //[7] PWR_MODE, [6:1] ZG_OFFS_TC, [0] OTP_BNK_VLD
-#define MPU6050_RA_X_FINE_GAIN 0x03  //[7:0] X_FINE_GAIN
-#define MPU6050_RA_Y_FINE_GAIN 0x04  //[7:0] Y_FINE_GAIN
-#define MPU6050_RA_Z_FINE_GAIN 0x05  //[7:0] Z_FINE_GAIN
-#define MPU6050_RA_XA_OFFS_H 0x06    //[15:0] XA_OFFS
+  0x02                              //[7] PWR_MODE, [6:1] ZG_OFFS_TC, [0] OTP_BNK_VLD
+#define MPU6050_RA_X_FINE_GAIN 0x03 //[7:0] X_FINE_GAIN
+#define MPU6050_RA_Y_FINE_GAIN 0x04 //[7:0] Y_FINE_GAIN
+#define MPU6050_RA_Z_FINE_GAIN 0x05 //[7:0] Z_FINE_GAIN
+#define MPU6050_RA_XA_OFFS_H 0x06   //[15:0] XA_OFFS
 #define MPU6050_RA_XA_OFFS_L_TC 0x07
-#define MPU6050_RA_YA_OFFS_H 0x08  //[15:0] YA_OFFS
+#define MPU6050_RA_YA_OFFS_H 0x08 //[15:0] YA_OFFS
 #define MPU6050_RA_YA_OFFS_L_TC 0x09
-#define MPU6050_RA_ZA_OFFS_H 0x0A  //[15:0] ZA_OFFS
+#define MPU6050_RA_ZA_OFFS_H 0x0A //[15:0] ZA_OFFS
 #define MPU6050_RA_ZA_OFFS_L_TC 0x0B
-#define MPU6050_RA_SELF_TEST_X 0x0D  //[7:5] XA_TEST[4-2], [4:0] XG_TEST[4-0]
-#define MPU6050_RA_SELF_TEST_Y 0x0E  //[7:5] YA_TEST[4-2], [4:0] YG_TEST[4-0]
-#define MPU6050_RA_SELF_TEST_Z 0x0F  //[7:5] ZA_TEST[4-2], [4:0] ZG_TEST[4-0]
+#define MPU6050_RA_SELF_TEST_X 0x0D //[7:5] XA_TEST[4-2], [4:0] XG_TEST[4-0]
+#define MPU6050_RA_SELF_TEST_Y 0x0E //[7:5] YA_TEST[4-2], [4:0] YG_TEST[4-0]
+#define MPU6050_RA_SELF_TEST_Z 0x0F //[7:5] ZA_TEST[4-2], [4:0] ZG_TEST[4-0]
 #define MPU6050_RA_SELF_TEST_A \
-  0x10  //[5:4] XA_TEST[1-0], [3:2] YA_TEST[1-0], [1:0] ZA_TEST[1-0]
-#define MPU6050_RA_XG_OFFS_USRH 0x13  //[15:0] XG_OFFS_USR
+  0x10                               //[5:4] XA_TEST[1-0], [3:2] YA_TEST[1-0], [1:0] ZA_TEST[1-0]
+#define MPU6050_RA_XG_OFFS_USRH 0x13 //[15:0] XG_OFFS_USR
 #define MPU6050_RA_XG_OFFS_USRL 0x14
-#define MPU6050_RA_YG_OFFS_USRH 0x15  //[15:0] YG_OFFS_USR
+#define MPU6050_RA_YG_OFFS_USRH 0x15 //[15:0] YG_OFFS_USR
 #define MPU6050_RA_YG_OFFS_USRL 0x16
-#define MPU6050_RA_ZG_OFFS_USRH 0x17  //[15:0] ZG_OFFS_USR
+#define MPU6050_RA_ZG_OFFS_USRH 0x17 //[15:0] ZG_OFFS_USR
 #define MPU6050_RA_ZG_OFFS_USRL 0x18
 #define MPU6050_RA_SMPLRT_DIV 0x19
 #define MPU6050_RA_CONFIG 0x1A
@@ -440,10 +440,12 @@ THE SOFTWARE.
 
 // note: DMP code memory blocks defined at end of header file
 
-class MPU6050 {
- public:
+class MPU6050
+{
+public:
   MPU6050();
   MPU6050(uint8_t address);
+  ~MPU6050();
 
   void readRegister(uint8_t reg, uint8_t *data, uint8_t len);
 
@@ -1058,12 +1060,13 @@ class MPU6050 {
 #endif
 
   void calibrateGyro(
-      uint8_t Loops = 15);  // Fine tune after setting offsets with less Loops.
+      uint8_t Loops = 15); // Fine tune after setting offsets with less Loops.
   void CalibrateAccel(
-      uint8_t Loops = 15);  // Fine tune after setting offsets with less Loops.
-  void PID(uint8_t ReadAddress, float kP, float kI, uint8_t Loops);  // Does the
+      uint8_t Loops = 15);                                          // Fine tune after setting offsets with less Loops.
+  void PID(uint8_t ReadAddress, float kP, float kI, uint8_t Loops); // Does the
 
- private:
+private:
+  I2Cdev *i2c;
   uint8_t devAddr;
   uint8_t buffer[14];
 };

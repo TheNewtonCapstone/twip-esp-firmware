@@ -6,6 +6,9 @@
         "gpio.h": "c",
         "uart.h": "c",
         "freertos.h": "c",
-        "inttypes.h": "c"
+        "inttypes.h": "c",
+        "i2c_periph.h": "c",
+        "i2c_private.h": "c",
+        "i2c_hal.h": "c"
     }
 }
