@@ -14,23 +14,25 @@
 #include "MPU6050_6Axis_MotionApps20.h"
 #include "sdkconfig.h"
 
-extern "C" {
-void app_main(void);
+extern "C"
+{
+  void app_main(void);
 }
 
 #define PIN_SDA 21
 #define PIN_CLK 22
 
-Quaternion q;         // [w, x, y, z]         quaternion container
-VectorFloat gravity;  // [x, y, z]            gravity vector
+Quaternion q;        // [w, x, y, z]         quaternion container
+VectorFloat gravity; // [x, y, z]            gravity vector
 float
-    ypr[3];  // [yaw, pitch, roll]   yaw/pitch/roll container and gravity vector
-uint16_t packetSize = 42;  // expected DMP packet size (default is 42 bytes)
-uint16_t fifoCount;        // count of all bytes currently in FIFO
-uint8_t fifoBuffer[64];    // FIFO storage buffer
-uint8_t mpuIntStatus;      // holds actual interrupt status byte from MPU
+    ypr[3];               // [yaw, pitch, roll]   yaw/pitch/roll container and gravity vector
+uint16_t packetSize = 42; // expected DMP packet size (default is 42 bytes)
+uint16_t fifoCount;       // count of all bytes currently in FIFO
+uint8_t fifoBuffer[64];   // FIFO storage buffer
+uint8_t mpuIntStatus;     // holds actual interrupt status byte from MPU
 
-void task_initI2C(void *ignore) {
+void task_initI2C(void *ignore)
+{
   i2c_config_t conf;
   conf.mode = I2C_MODE_MASTER;
   conf.sda_io_num = (gpio_num_t)PIN_SDA;
@@ -43,9 +45,10 @@ void task_initI2C(void *ignore) {
   vTaskDelete(NULL);
 }
 
-void task_display(void *) {
+void task_display(void *)
+{
   MPU6050 mpu = MPU6050();
-  mpu.Initialize();
+  mpu.initialize();
   mpu.dmpInitialize();
 
   // This need to be setup individually
@@ -58,19 +61,24 @@ void task_display(void *) {
 
   mpu.setDMPEnabled(true);
 
-  while (1) {
+  while (1)
+  {
     mpuIntStatus = mpu.getIntStatus();
     // get current FIFO count
     fifoCount = mpu.getFIFOCount();
 
-    if ((mpuIntStatus & 0x10) || fifoCount == 1024) {
+    if ((mpuIntStatus & 0x10) || fifoCount == 1024)
+    {
       // reset so we can continue cleanly
       mpu.resetFIFO();
 
       // otherwise, check for DMP data ready interrupt frequently)
-    } else if (mpuIntStatus & 0x02) {
+    }
+    else if (mpuIntStatus & 0x02)
+    {
       // wait for correct available data length, should be a VERY short wait
-      while (fifoCount < packetSize) fifoCount = mpu.getFIFOCount();
+      while (fifoCount < packetSize)
+        fifoCount = mpu.getFIFOCount();
 
       // read a packet from FIFO
 
@@ -92,7 +100,8 @@ void task_display(void *) {
   vTaskDelete(NULL);
 }
 
-void app_main() {
+void app_main()
+{
   xTaskCreate(task_initI2C, "task_initI2C", 2048, NULL, 5, NULL);
   xTaskCreate(task_display, "task_display", 2048, NULL, 5, NULL);
 }
