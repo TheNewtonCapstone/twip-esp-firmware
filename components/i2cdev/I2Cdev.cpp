@@ -81,7 +81,7 @@ void I2Cdev::initializeI2CBus(i2c_port_t i2c_num, gpio_num_t sda, gpio_num_t scl
 		.scl_io_num = scl,
 		.clk_source = I2C_CLK_SRC_DEFAULT,
 		.flags = {
-			.enable_internal_pullup = false,
+			.enable_internal_pullup = true,
 		},
 	};
 
@@ -204,9 +204,9 @@ int8_t I2Cdev::readByte(uint8_t devAddr, uint8_t regAddr, uint8_t *data, uint16_
 int8_t I2Cdev::readBytes(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint8_t *data, uint16_t timeout)
 {
 	// i2c_cmd_handle_t cmd;
-	selectRegister(devAddr, regAddr);
+	// selectRegister(devAddr, regAddr);
 
-	ESP_ERROR_CHECK(i2c_master_receive(*dev_handle, data, length, timeout));
+	ESP_ERROR_CHECK(i2c_master_transmit_receive(*dev_handle, &regAddr, 1, data, length, timeout));
 
 	/* 	cmd = i2c_cmd_link_create();
 		ESP_ERROR_CHECK(i2c_master_start(cmd));
@@ -303,8 +303,8 @@ bool I2Cdev::writeBits(uint8_t devAddr, uint8_t regAddr, uint8_t bitStart, uint8
  */
 bool I2Cdev::writeByte(uint8_t devAddr, uint8_t regAddr, uint8_t data)
 {
-	ESP_ERROR_CHECK(i2c_master_transmit(*dev_handle, &regAddr, 1, I2CDEV_DEFAULT_READ_TIMEOUT));
-	ESP_ERROR_CHECK(i2c_master_transmit(*dev_handle, &data, 1, I2CDEV_DEFAULT_READ_TIMEOUT));
+	uint8_t data_with_reg[2] = {regAddr, data};
+	ESP_ERROR_CHECK(i2c_master_transmit(*dev_handle, data_with_reg, 2, I2CDEV_DEFAULT_READ_TIMEOUT));
 
 	/* 	i2c_cmd_handle_t cmd;
 
@@ -329,9 +329,14 @@ bool I2Cdev::writeByte(uint8_t devAddr, uint8_t regAddr, uint8_t data)
  */
 bool I2Cdev::writeBytes(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint8_t *data)
 {
-	ESP_ERROR_CHECK(i2c_master_transmit(*dev_handle, &regAddr, 1, I2CDEV_DEFAULT_READ_TIMEOUT));
-	ESP_ERROR_CHECK(i2c_master_transmit(*dev_handle, data, length - 1, I2CDEV_DEFAULT_READ_TIMEOUT));
-	ESP_ERROR_CHECK(i2c_master_transmit(*dev_handle, data + length - 2, 1, I2CDEV_DEFAULT_READ_TIMEOUT));
+	uint8_t data_with_reg[length + 1];
+	data_with_reg[0] = regAddr;
+	for (int i = 0; i < length; i++)
+	{
+		data_with_reg[i + 1] = data[i];
+	}
+
+	ESP_ERROR_CHECK(i2c_master_transmit(*dev_handle, data_with_reg, length + 1, I2CDEV_DEFAULT_READ_TIMEOUT));
 
 	/* 	i2c_cmd_handle_t cmd;
 
