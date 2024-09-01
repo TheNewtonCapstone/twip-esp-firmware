@@ -1,15 +1,17 @@
 dependencies:
   idf:
-    component_hash: null
     source:
       type: idf
     version: 5.3.0
   mpu6050:
-    component_hash: null
+    dependencies: []
     source:
-      path: /home/nyquist/projects/twip-firmware/components/mpu6050
+      path: /home/augus/projects/twip-firmware/components/mpu6050
       type: local
     version: 1.2.0
-manifest_hash: 60c9df6678536433c432a0d1293d52e9c618aab3a07a9f6172a14db305c76f1d
+direct_dependencies:
+- espressif/mpu6050
+- idf
+manifest_hash: 00804659f7eadf7fae8f5f8d31c3fdd55c13febf2e325c80e43b7a166b808ed3
 target: esp32
-version: 1.0.0
+version: 2.0.0
