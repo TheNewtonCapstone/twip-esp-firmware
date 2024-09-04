@@ -1,5 +1,3 @@
-idf_component_register(
-    SRCS "mpu6050.c"
-    INCLUDE_DIRS "include"
-    REQUIRES "driver"
-)
+idf_component_register(SRCS "MPU6050.cpp"
+                    INCLUDE_DIRS "include"
+                    PRIV_REQUIRES "i2cdev")
