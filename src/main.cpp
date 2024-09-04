@@ -71,8 +71,6 @@ void app_main() {
   xTaskCreate(rx_task, "rx_task", 4096, NULL, 5, NULL);
 }
 
-
-
 static void rx_task(void* arg) {
   static const char* RX_TASK_TAG = "RX_TASK";
   esp_log_level_set(RX_TASK_TAG, ESP_LOG_INFO);
