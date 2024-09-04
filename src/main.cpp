@@ -17,7 +17,7 @@
 #include <string.h>
 #include "driver/uart.h"
 #include <driver/ledc.h>
-#include <esp32/gpio.h>
+#include "driver/gpio.h"
 
 static const int RX_BUF_SIZE = 1024;
 
@@ -26,10 +26,6 @@ static const int RX_BUF_SIZE = 1024;
 
 #define PACKET_SIZE 16
 const int DELAY_MS = 30;
-
-extern "C" {
-  void app_main(void);
-}
 
 // MOTOR CONSTANTS
 const int PWM_CHANNEL = 0;
@@ -50,6 +46,10 @@ const Motor motor2 = { GPIO_NUM_12, GPIO_NUM_14, GPIO_NUM_27 };   // right
 
 static IMUData imu_data;
 
+
+extern "C" {
+  void app_main(void);
+}
 
 void init_uart(void);
 void init_motors(void);
