@@ -4,7 +4,6 @@
  *  Created on: 14.08.2017
  *      Author: darek
  */
-// #include <driver/i2c.h>
 #define LOG_LOCAL_LEVEL ESP_LOG_VERBOSE
 #include "esp_log.h"
 #include <freertos/FreeRTOS.h>
