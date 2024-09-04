@@ -1,42 +1,38 @@
 #pragma once
 
-#include <mpu6050.h>
+#include <esp_timer.h>
 
-#include "driver/gpio.h"
-#include "driver/i2c_master.h"
-#include "esp_timer.h"
-#include "imu_result.h"
+#include <functional>
+#include <string>
 
-typedef void (*imu_data_cb_t)(void* imu_data_ptr);
+#include "MPU6050.h"
+#include "helper_3dmath.h"
 
-typedef struct {
-  double ax;
-  double ay;
-  double az;
-  double angx;
-  double angy;
-  double angz;
-  double yaw;
-  double pitch;
-  double roll;
-} imu_data_t;
+struct IMUData {
+  VectorFloat gravity;
+  VectorInt16 linear_acc;
+  VectorInt16 ang_vel;
+  VectorFloat orientation;
+};
 
-typedef struct {
-  i2c_master_dev_handle_t dev_handle;
-  mpu6050_handle_t imu_handle;
-  esp_timer_handle_t timer_handle;
+typedef std::function<void(IMUData)> IMUDataCallback;
 
-  imu_data_cb_t
-      data_cb;  // imu data is scoped to the imu_cb function, copy it if needed
+class IMU {
+ public:
+  IMU(const uint8_t dev_addr) : mpu(dev_addr) {};
+  ~IMU();
 
-  uint64_t timer_period_ns;
-} imu_t;
+  void init();
+  void start(uint64_t period);
+  void stop();
 
-// Creates an IMU object: if it can't allocate memory, it returns NULL
-imu_t* create_imu(uint64_t timer_period_ns, imu_data_cb_t data_cb);
-// Deletes an IMU object: IMU cannot be used afterwards
-void delete_imu(imu_t* imu);
+  void subscribe(std::string id, IMUDataCallback callback);
+  void unsubscribe(std::string id);
 
-imu_result_t init_imu(uint8_t sda, uint8_t scl, int8_t i2c_address, imu_t* imu);
+ private:
+  static void TimerCallback(void *arg);
 
-void imu_cb(void* imu_ptr);
+  MPU6050 mpu;
+  esp_timer_handle_t periodic_timer;
+  std::unordered_map<std::string, IMUDataCallback> callbacks;
+};
