@@ -4,6 +4,7 @@
 #include "Wire.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include <NoDelay.h>
 // #if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
 // #include "Wire.h"
 // #endif
@@ -17,6 +18,7 @@
 #define TX_PIN 17
 #define TX_BUFFER_SIZE 16
 #define RX_BUFFER_SIZE 32
+
 
 // MOTOR CONSTANTS
 const int PWM_CHANNEL = 0;
@@ -55,7 +57,7 @@ const Motor motor2 = { 12, 14, 27 };  // right
 
 
 TaskHandle_t task_handle;  // gives the ability to handle a task
-
+noDelay Motortimer(5);     //Creats a noDelay varible set to 1000ms
 
 // IMU CONSTANTS
 MPU6050 mpu;
@@ -247,6 +249,8 @@ void task_imu(void *pvParameters) {
 
     prev_yaw = curr_yaw;
     timer_cb_prev_time = timer_cb_curr_time;
+
+    delay(5);
   }
 }
 void task_motor(void *pvParameters) {
@@ -271,8 +275,11 @@ void task_motor(void *pvParameters) {
 #ifdef DEBUG_MOTOR
     Serial.printf("Received : %d\t %f\%f\n", rx_bytes, motor_cmd_1, motor_cmd_2);
 #endif
-    set_torque(motor_cmd_1, motor1);
-    set_torque(motor_cmd_2, motor2);
+
+    if (Motortimer.update()) {
+      set_torque(motor_cmd_1, motor1);
+      set_torque(motor_cmd_2, motor2);
+    }
   }
 }
 // ================================================================
@@ -308,6 +315,7 @@ void test_imu() {
 void test_motors() {
   for (float i = -1.f; i < 1.f; i += 0.05f) {
     set_torque(i, motor1);
+
     set_torque(i, motor2);
     Serial.printf("Torque %f", i);
     delay(1000);
@@ -317,9 +325,8 @@ void test_motors() {
 }
 
 void set_torque(float torque, const Motor &motor) {
-  float speed = NO_LOAD_SPEED * (torque) / STALL_TORQUE;
-  digitalWrite(motor.dir, (speed > 0) ? LOW : HIGH);
-  int pwm = (int)((abs(speed) / NO_LOAD_SPEED * 150.f) + 95.f);
+  float speed = ((torque) / STALL_TORQUE) / 2.0f;
+  digitalWrite(motor.dir, (speed > 0) ? HIGH : LOW);
+  int pwm = (int)((abs(speed) * 150.f) + 95.f);
   ledcWrite(motor.pwm, pwm);
-  delay(5);
 }
