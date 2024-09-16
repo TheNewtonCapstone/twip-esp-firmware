@@ -17,7 +17,7 @@
 #define RX_PIN 16
 #define TX_PIN 17
 #define TX_BUFFER_SIZE 16
-#define RX_BUFFER_SIZE 32
+#define RX_BUFFER_SIZE 255
 
 
 // MOTOR CONSTANTS
@@ -109,7 +109,7 @@ void setup() {
   setup_mpu();
   setup_motors();
   // uart  config
-  Serial2.begin(115200, SERIAL_8N1, RX_PIN, TX_PIN);
+  Serial2.begin(9600, SERIAL_8N1, RX_PIN, TX_PIN);
 
   prev_time = millis();
   timer_cb_curr_time = millis();
@@ -250,7 +250,6 @@ void task_imu(void *pvParameters) {
     prev_yaw = curr_yaw;
     timer_cb_prev_time = timer_cb_curr_time;
 
-    delay(5);
   }
 }
 void task_motor(void *pvParameters) {
@@ -267,6 +266,8 @@ void task_motor(void *pvParameters) {
     rx_bytes = Serial2.readBytes(rx_buf, RX_BUFFER_SIZE);
 
     if (rx_bytes <= 0) {
+      set_torque(0, motor1);
+      set_torque(0, motor2);
       Serial.println("No bytes received");
       continue;
     }
@@ -276,10 +277,8 @@ void task_motor(void *pvParameters) {
     Serial.printf("Received : %d\t %f\%f\n", rx_bytes, motor_cmd_1, motor_cmd_2);
 #endif
 
-    if (Motortimer.update()) {
       set_torque(motor_cmd_1, motor1);
       set_torque(motor_cmd_2, motor2);
-    }
   }
 }
 // ================================================================
@@ -325,8 +324,14 @@ void test_motors() {
 }
 
 void set_torque(float torque, const Motor &motor) {
-  float speed = ((torque) / STALL_TORQUE) / 2.0f;
+  float speed = ((torque) / STALL_TORQUE);
   digitalWrite(motor.dir, (speed > 0) ? HIGH : LOW);
-  int pwm = (int)((abs(speed) * 150.f) + 95.f);
+
+int torque_int = (int) (torque * 1023.0);
+  int pwm = map(abs(torque_int), 0,1023, 80, 255);
+  // int pwm = (int)((abs(speed) * 150.f) + 95.f);
+
+  Serial.print("PWM: ");
+  Serial.println(pwm);
   ledcWrite(motor.pwm, pwm);
 }
