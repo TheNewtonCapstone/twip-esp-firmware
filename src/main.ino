@@ -109,7 +109,7 @@ void setup() {
   setup_mpu();
   setup_motors();
   // uart  config
-  Serial2.begin(9600, SERIAL_8N1, RX_PIN, TX_PIN);
+  Serial2.begin(230400, SERIAL_8N1, RX_PIN, TX_PIN);
 
   prev_time = millis();
   timer_cb_curr_time = millis();
@@ -118,8 +118,7 @@ void setup() {
 }
 
 void loop() {
-  delay(DELAY_MS);
-  // test_imu();
+
 }
 
 
@@ -324,14 +323,11 @@ void test_motors() {
 }
 
 void set_torque(float torque, const Motor &motor) {
-  float speed = ((torque) / STALL_TORQUE);
-  digitalWrite(motor.dir, (speed > 0) ? HIGH : LOW);
-
-int torque_int = (int) (torque * 1023.0);
-  int pwm = map(abs(torque_int), 0,1023, 80, 255);
+  digitalWrite(motor.dir, (torque > 0) ? HIGH : LOW);
+  int pwm = (int) (((abs(torque) * 0.625f) + 0.375f) * 255.f);
   // int pwm = (int)((abs(speed) * 150.f) + 95.f);
 
-  Serial.print("PWM: ");
-  Serial.println(pwm);
+  // Serial.print("PWM: ");
+  // Serial.println(pwm);
   ledcWrite(motor.pwm, pwm);
 }
